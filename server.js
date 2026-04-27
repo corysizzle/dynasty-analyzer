@@ -16,7 +16,14 @@ app.get('*', (req, res) => {
 });
 
 initDb();
-app.listen(PORT, () => {
-  console.log(`\n  Sleeper Dynasty Analyzer`);
-  console.log(`  → http://localhost:${PORT}\n`);
-});
+
+// Local dev: start the server directly.
+// Vercel: export the app as a serverless handler — don't call listen().
+if (require.main === module) {
+  app.listen(PORT, () => {
+    console.log(`\n  Sleeper Dynasty Analyzer`);
+    console.log(`  → http://localhost:${PORT}\n`);
+  });
+}
+
+module.exports = app;

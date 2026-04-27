@@ -2,13 +2,19 @@
 const Database = require('better-sqlite3');
 const path = require('path');
 
-const DB_PATH = path.join(__dirname, 'cache.db');
+// Vercel's filesystem is read-only except /tmp. WAL mode needs shared memory
+// that serverless environments don't provide, so we skip it there.
+const IS_VERCEL = !!process.env.VERCEL;
+const DB_PATH = IS_VERCEL
+  ? '/tmp/cache.db'
+  : path.join(__dirname, 'cache.db');
+
 let _db = null;
 
 function getDb() {
   if (!_db) {
     _db = new Database(DB_PATH);
-    _db.pragma('journal_mode = WAL');
+    if (!IS_VERCEL) _db.pragma('journal_mode = WAL');
     _db.pragma('foreign_keys = ON');
   }
   return _db;
