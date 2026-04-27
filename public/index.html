@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FTLOTG Dynasty Analyzer</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+<!-- Loading Overlay -->
+<div id="loading-overlay">
+  <div id="loading-title">FTLOTG Dynasty</div>
+  <div class="spinner"></div>
+  <div id="loading-text">Connecting to Sleeper…</div>
+  <div class="loading-bar"><div class="loading-fill" id="loading-fill" style="width:5%"></div></div>
+</div>
+
+<!-- Header -->
+<header class="app-header">
+  <div class="header-left">
+    <span style="font-size:22px">🏈</span>
+    <span class="app-title">FTLOTG Dynasty Analyzer</span>
+    <span class="team-badge">Thomas the Tank Engine</span>
+  </div>
+  <div class="header-right">
+    <label class="btn btn-secondary" style="cursor:pointer">
+      📥 Import KTC CSV
+      <input type="file" id="ktc-csv-input" accept=".csv" style="display:none">
+    </label>
+    <button id="refresh-btn" class="btn btn-primary">↻ Refresh</button>
+  </div>
+</header>
+
+<!-- Tab Nav -->
+<nav class="tab-nav">
+  <button class="tab-btn active" data-tab="rosters">📋 Rosters</button>
+  <button class="tab-btn" data-tab="age">📊 Age Chart</button>
+  <button class="tab-btn" data-tab="picks">🎯 Draft Picks</button>
+  <button class="tab-btn" data-tab="trade">⚖️ Trade Analyzer</button>
+  <button class="tab-btn" data-tab="standings">🏆 Power Rankings</button>
+</nav>
+
+<!-- Main Content -->
+<main class="app-main">
+
+  <!-- Rosters Tab -->
+  <div id="tab-rosters" class="tab-panel active">
+    <div class="toolbar">
+      <span class="toolbar-label">Team:</span>
+      <select id="roster-team-select" style="width:240px"></select>
+      <span class="toolbar-label" style="margin-left:12px">Sort by:</span>
+      <select id="roster-sort-select">
+        <option value="slot">Slot</option>
+        <option value="name">Name</option>
+        <option value="position">Position</option>
+        <option value="age">Age</option>
+        <option value="ktc_sf_value">KTC Value</option>
+      </select>
+      <span id="roster-total" style="margin-left:auto;color:var(--text-muted);font-size:13px"></span>
+    </div>
+    <div class="pos-legend" id="roster-legend">
+      <div class="legend-item"><div class="legend-dot" style="background:var(--pos-qb)"></div>QB</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--pos-rb)"></div>RB</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--pos-wr)"></div>WR</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--pos-te)"></div>TE</div>
+      <div class="legend-item" style="margin-left:16px">⚠ = aging concern</div>
+    </div>
+    <div class="card tbl-wrap" style="flex:1">
+      <table id="roster-table">
+        <thead>
+          <tr>
+            <th style="width:80px">Slot</th>
+            <th style="width:200px">Name</th>
+            <th style="width:60px">Pos</th>
+            <th style="width:80px">NFL Team</th>
+            <th style="width:55px">Age</th>
+            <th style="width:100px">KTC (SF)</th>
+            <th style="width:30px">⚠</th>
+          </tr>
+        </thead>
+        <tbody id="roster-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Age Chart Tab -->
+  <div id="tab-age" class="tab-panel">
+    <div class="age-controls">
+      <span class="toolbar-label">Highlight:</span>
+      <select id="age-team-select" style="width:220px"></select>
+      <div class="toggle-group" style="margin-left:16px">
+        <button class="toggle-btn active" data-mode="bar">Bar Chart</button>
+        <button class="toggle-btn" data-mode="heatmap">Heatmap</button>
+      </div>
+    </div>
+    <div id="age-bar-container" class="chart-grid">
+      <div class="chart-box"><div class="chart-title qb">QB</div><canvas id="chart-qb"></canvas></div>
+      <div class="chart-box"><div class="chart-title rb">RB</div><canvas id="chart-rb"></canvas></div>
+      <div class="chart-box"><div class="chart-title wr">WR</div><canvas id="chart-wr"></canvas></div>
+      <div class="chart-box"><div class="chart-title te">TE</div><canvas id="chart-te"></canvas></div>
+    </div>
+    <div id="age-heatmap-container" class="heatmap-wrap" style="display:none">
+      <table class="heatmap-table" id="age-heatmap-table"></table>
+    </div>
+  </div>
+
+  <!-- Draft Picks Tab -->
+  <div id="tab-picks" class="tab-panel">
+    <div class="toolbar">
+      <span class="toolbar-label">Pick tier:</span>
+      <select id="picks-tier-select">
+        <option value="early">Early</option>
+        <option value="mid" selected>Mid</option>
+        <option value="late">Late</option>
+      </select>
+      <span class="toolbar-label" style="margin-left:12px">Sort by:</span>
+      <select id="picks-sort-select">
+        <option value="total_ktc">Total KTC</option>
+        <option value="num_picks"># of Picks</option>
+        <option value="team_name">Team Name</option>
+      </select>
+      <div class="pos-legend" style="margin:0 0 0 auto">
+        <div class="legend-item"><div class="legend-dot" style="background:rgba(239,83,80,0.5)"></div>Rd 1</div>
+        <div class="legend-item"><div class="legend-dot" style="background:rgba(255,167,38,0.5)"></div>Rd 2</div>
+        <div class="legend-item"><div class="legend-dot" style="background:rgba(102,187,106,0.5)"></div>Rd 3</div>
+      </div>
+    </div>
+    <div class="card tbl-wrap" style="flex:1">
+      <table id="picks-table" style="table-layout:auto">
+        <thead id="picks-thead"><tr></tr></thead>
+        <tbody id="picks-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Trade Analyzer Tab -->
+  <div id="tab-trade" class="tab-panel">
+    <div class="toolbar">
+      <button id="trade-save-btn" class="btn btn-success btn-sm">💾 Save</button>
+      <button id="trade-load-btn" class="btn btn-secondary btn-sm">📂 Load</button>
+      <button id="trade-clear-btn" class="btn btn-danger btn-sm">✕ Clear</button>
+    </div>
+    <div class="trade-layout">
+
+      <!-- Side A -->
+      <div class="card trade-side side-a">
+        <div class="trade-side-title">Team A — Gives Away</div>
+        <div style="padding:10px 12px;display:flex;flex-direction:column;gap:8px;flex:1;overflow:hidden">
+          <div class="search-wrap">
+            <input type="text" class="search-input" id="search-a" placeholder="Search players…" autocomplete="off">
+            <div class="search-results hidden" id="results-a"></div>
+          </div>
+          <div class="pick-adder">
+            <span style="color:var(--text-muted);font-size:12px">Pick:</span>
+            <select id="pick-a-year"><option>2026</option><option>2027</option><option>2028</option></select>
+            <select id="pick-a-round"><option value="1">R1</option><option value="2">R2</option><option value="3">R3</option></select>
+            <select id="pick-a-tier"><option value="early">Early</option><option value="mid" selected>Mid</option><option value="late">Late</option></select>
+            <input type="number" id="pick-a-override" placeholder="$ val" min="0">
+            <button class="btn btn-secondary btn-sm" id="add-pick-a">+ Pick</button>
+          </div>
+          <div class="trade-items-list" id="items-a" style="flex:1;overflow:auto"></div>
+          <div class="trade-total" id="total-a">Total: —</div>
+        </div>
+      </div>
+
+      <!-- Side B -->
+      <div class="card trade-side side-b">
+        <div class="trade-side-title">Team B — Gives Away</div>
+        <div style="padding:10px 12px;display:flex;flex-direction:column;gap:8px;flex:1;overflow:hidden">
+          <div class="search-wrap">
+            <input type="text" class="search-input" id="search-b" placeholder="Search players…" autocomplete="off">
+            <div class="search-results hidden" id="results-b"></div>
+          </div>
+          <div class="pick-adder">
+            <span style="color:var(--text-muted);font-size:12px">Pick:</span>
+            <select id="pick-b-year"><option>2026</option><option>2027</option><option>2028</option></select>
+            <select id="pick-b-round"><option value="1">R1</option><option value="2">R2</option><option value="3">R3</option></select>
+            <select id="pick-b-tier"><option value="early">Early</option><option value="mid" selected>Mid</option><option value="late">Late</option></select>
+            <input type="number" id="pick-b-override" placeholder="$ val" min="0">
+            <button class="btn btn-secondary btn-sm" id="add-pick-b">+ Pick</button>
+          </div>
+          <div class="trade-items-list" id="items-b" style="flex:1;overflow:auto"></div>
+          <div class="trade-total" id="total-b">Total: —</div>
+        </div>
+      </div>
+    </div>
+    <div class="verdict-bar" id="verdict-bar">
+      Add players or picks to both sides to analyze.
+    </div>
+  </div>
+
+  <!-- Power Rankings Tab -->
+  <div id="tab-standings" class="tab-panel">
+    <div class="toolbar">
+      <span style="color:var(--text-muted);font-size:12px">Weights: 30% W/L · 50% KTC · 20% Age</span>
+      <div class="toggle-group" style="margin-left:auto">
+        <button class="toggle-btn active" data-view="table" id="standings-table-btn">Table</button>
+        <button class="toggle-btn" data-view="chart" id="standings-chart-btn">Chart</button>
+      </div>
+    </div>
+    <div id="standings-table-view" style="flex:1;overflow:hidden;display:flex;flex-direction:column">
+      <div class="card tbl-wrap" style="flex:1">
+        <table id="standings-table">
+          <thead>
+            <tr>
+              <th style="width:50px">Rank</th>
+              <th style="width:220px">Team</th>
+              <th style="width:70px">Record</th>
+              <th style="width:80px">PF</th>
+              <th style="width:80px">PA</th>
+              <th style="width:110px">Total KTC</th>
+              <th style="width:85px">Age Score</th>
+              <th style="width:90px">Dynasty</th>
+              <th style="width:110px">Label</th>
+            </tr>
+          </thead>
+          <tbody id="standings-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+    <div id="standings-chart-view" style="flex:1;display:none">
+      <div class="chart-full"><canvas id="standings-chart"></canvas></div>
+    </div>
+  </div>
+
+</main>
+
+<!-- Status Bar -->
+<footer class="status-bar">
+  <span id="status-text">Loading…</span>
+  <span id="last-updated"></span>
+</footer>
+
+<!-- Toast -->
+<div id="toast"></div>
+
+<!-- Charts -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+<!-- App modules -->
+<script src="/js/roster.js"></script>
+<script src="/js/age.js"></script>
+<script src="/js/picks.js"></script>
+<script src="/js/trade.js"></script>
+<script src="/js/standings.js"></script>
+<script src="/js/app.js"></script>
+</body>
+</html>

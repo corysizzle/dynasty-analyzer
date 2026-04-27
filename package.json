@@ -1,0 +1,19 @@
+{
+  "name": "sleeper-dynasty-analyzer",
+  "version": "1.0.0",
+  "description": "Dynasty fantasy football analyzer — FTLOTG league",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "dependencies": {
+    "better-sqlite3": "^11.0.0",
+    "csv-parse": "^5.5.6",
+    "express": "^4.19.2",
+    "multer": "^2.0.0"
+  }
+}
